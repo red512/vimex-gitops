@@ -1,0 +1,24 @@
+replicaCount: 1
+image:
+  repository: projectred521/flask-w
+  tag: v0.1.1
+  pullPolicy: IfNotPresent
+resources:
+  limits:
+    memory: "256Mi"
+    cpu: "500m"
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 80
+service:
+  name: backend-service
+  type: ClusterIP
+  port: 80
+  targetPort: 5000
+namespace:
+  name: backend
+apiKey:
+  key: AgDUweXAXOPD0b+jUr86FzG+g6Ca/BC7rooxQZ3MwLLKct62pXMdzL++wJFarkCEYJ4zYB2jwSFnZO4QQh/IcXrk90ZLi0ieA/8xS7dLd1vuh/R57ZksxDsTic69fAfHC+prOZ+feMLu72kVkBjhAm749EF3oOnJSNiuklkX6VJGhdcygoRb33z0WG3CJdg20i8wykVnMX73aNWzHQF28C8Nk9HI4gU7y6uRoWJmakdHnXVTfBd1jsPvzECY6IHm1C2tZxzilc7VFtCannROKNeUiFYFn77uZstAEw5o2nRM0pni2F9XF4INENiQwYZZVErnD5NwBMRZ2Z+gWrHGIuGsGHxXuopot83XgtLKuf9U7gZr2Vl3UEp7KIMWpkFNwm2Ri7wdUealib7/VOJ52vs+HI0W8S1JacE5204Wh4519o82XhtKc8S5o03IyE/OtKngvUnr6paPGGHrZLCMNxTNqYLrKglSxmwRXfZLf6zz5LgLtPtegHjdHDTLeqeyZM6vEt8uS9vjvqTDsNPu+4PLi4PAkAjbmWsxC8OshnqsqUsi2qM31xxgX7u48+RRaKUHlq3M4R+8e4WMSljpVm1visYTqW0yrAHTDrWmx93wiBzcEM2dq7cQ25wqyYbcoPsC4V1T7g8zxtxq+ue+MAieBPGLHwyhyKCsgbtkByufDoKWDFK9o7fUqw8fyJiRb2RHgv4bBnigvDDrJTxWKDxQwEpCulYkN8S/eMkvCT2XnA==
+

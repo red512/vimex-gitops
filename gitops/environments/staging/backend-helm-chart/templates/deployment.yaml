@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: backend  
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{ toYaml .Values.resources | nindent 12 }}
+          ports:
+            - containerPort: 5000
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-key
+                  key: API-KEY
+
+
