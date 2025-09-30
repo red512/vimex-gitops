@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "redis-chart.fullname" . }}-config
+  labels:
+    {{- include "redis-chart.labels" . | nindent 4 }}
+data:
+  redis.conf: |
+    maxmemory {{ .Values.redis.config.maxMemory }}
+    maxmemory-policy {{ .Values.redis.config.maxMemoryPolicy }}
+    appendonly {{ .Values.redis.config.appendOnly | ternary "yes" "no" }}
+    appendfsync {{ .Values.redis.config.appendFsync }}
+    save 900 1
+    save 300 10
+    save 60 10000
+    tcp-keepalive 60
+    tcp-backlog 511
+    timeout 0
+    databases 16
