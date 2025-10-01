@@ -1,7 +1,7 @@
 replicaCount: 1
 image:
   repository: projectred521/flask-w
-  tag: vmanual-20251001-143147
+  tag: v1.0.20
   pullPolicy: IfNotPresent
 resources:
   limits:
