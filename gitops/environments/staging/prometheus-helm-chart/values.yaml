@@ -1,63 +1,53 @@
-kube-prometheus-stack:
-  prometheus:
-    prometheusSpec:
-      replicas: 1
-      retention: 7d
-      storageSpec:
-        volumeClaimTemplate:
-          spec:
-            storageClassName: ""
-            accessModes: ["ReadWriteOnce"]
-            resources:
-              requests:
-                storage: 5Gi
-      serviceMonitorSelectorNilUsesHelmValues: false
-      podMonitorSelectorNilUsesHelmValues: false
-      ruleSelectorNilUsesHelmValues: false
+prometheus:
+  server:
+    replicaCount: 1
+    retention: "7d"
+    persistentVolume:
+      enabled: true
+      size: 5Gi
+    service:
+      type: ClusterIP
+      servicePort: 80
 
-  # Disable Grafana (not needed for rollouts)
-  grafana:
-    enabled: false
-
-  # Disable AlertManager (not needed for rollouts)
+  # Disable AlertManager
   alertmanager:
     enabled: false
 
-  prometheusOperator:
-    replicas: 1
-
+  # Disable node exporter (not needed for basic metrics)
   nodeExporter:
-    enabled: true
+    enabled: false
 
+  # Disable kube state metrics (not needed for basic metrics)
   kubeStateMetrics:
-    enabled: true
+    enabled: false
 
-  defaultRules:
-    create: true
-    rules:
-      alertmanager: true
-      etcd: true
-      configReloaders: true
-      general: true
-      k8s: true
-      kubeApiserverAvailability: true
-      kubeApiserverBurnrate: true
-      kubeApiserverHistogram: true
-      kubeApiserverSlos: true
-      kubeControllerManager: true
-      kubelet: true
-      kubeProxy: true
-      kubePrometheusGeneral: true
-      kubePrometheusNodeRecording: true
-      kubernetesApps: true
-      kubernetesResources: true
-      kubernetesStorage: true
-      kubernetesSystem: true
-      kubeScheduler: true
-      kubeStateMetrics: true
-      network: true
-      node: true
-      nodeExporterAlerting: true
-      nodeExporterRecording: true
-      prometheus: true
-      prometheusOperator: true
+  # Disable pushgateway (not needed)
+  pushgateway:
+    enabled: false
+
+  # Simple scrape configs for basic monitoring
+  serverFiles:
+    prometheus.yml:
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+      scrape_configs:
+        - job_name: 'prometheus'
+          static_configs:
+            - targets: ['localhost:9090']
+        - job_name: 'kubernetes-pods'
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              action: keep
+              regex: true
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+              action: replace
+              target_label: __metrics_path__
+              regex: (.+)
+            - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+              action: replace
+              regex: ([^:]+)(?::\d+)?;(\d+)
+              replacement: $1:$2
+              target_label: __address__
