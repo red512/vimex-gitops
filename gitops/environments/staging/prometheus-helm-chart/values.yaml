@@ -1,6 +1,7 @@
 kube-prometheus-stack:
   prometheus:
     prometheusSpec:
+      replicas: 1
       retention: 15d
       storageSpec:
         volumeClaimTemplate:
@@ -17,6 +18,7 @@ kube-prometheus-stack:
   grafana:
     enabled: true
     adminPassword: admin
+    replicas: 1
     service:
       type: ClusterIP
     persistence:
@@ -26,6 +28,7 @@ kube-prometheus-stack:
   alertmanager:
     enabled: true
     alertmanagerSpec:
+      replicas: 1
       storage:
         volumeClaimTemplate:
           spec:
@@ -34,6 +37,9 @@ kube-prometheus-stack:
             resources:
               requests:
                 storage: 2Gi
+
+  prometheusOperator:
+    replicas: 1
 
   nodeExporter:
     enabled: true

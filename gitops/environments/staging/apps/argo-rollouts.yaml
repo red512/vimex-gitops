@@ -2,11 +2,11 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: argo-rollouts
-  namespace: argocd
+  namespace: argo
 spec:
   project: default
   source:
-    repoURL: https://github.com/vango/vimex-gitops.git
+    repoURL: https://github.com/red512/vimex-gitops.git
     targetRevision: HEAD
     path: gitops/environments/staging/argo-rollouts-helm-chart
   destination:
