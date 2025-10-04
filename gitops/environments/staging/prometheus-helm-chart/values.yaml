@@ -2,7 +2,7 @@ kube-prometheus-stack:
   prometheus:
     prometheusSpec:
       replicas: 1
-      retention: 15d
+      retention: 7d
       storageSpec:
         volumeClaimTemplate:
           spec:
@@ -10,33 +10,18 @@ kube-prometheus-stack:
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
-                storage: 10Gi
+                storage: 5Gi
       serviceMonitorSelectorNilUsesHelmValues: false
       podMonitorSelectorNilUsesHelmValues: false
       ruleSelectorNilUsesHelmValues: false
 
+  # Disable Grafana (not needed for rollouts)
   grafana:
-    enabled: true
-    adminPassword: admin
-    replicas: 1
-    service:
-      type: ClusterIP
-    persistence:
-      enabled: true
-      size: 1Gi
+    enabled: false
 
+  # Disable AlertManager (not needed for rollouts)
   alertmanager:
-    enabled: true
-    alertmanagerSpec:
-      replicas: 1
-      storage:
-        volumeClaimTemplate:
-          spec:
-            storageClassName: ""
-            accessModes: ["ReadWriteOnce"]
-            resources:
-              requests:
-                storage: 2Gi
+    enabled: false
 
   prometheusOperator:
     replicas: 1
