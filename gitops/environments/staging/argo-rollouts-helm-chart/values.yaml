@@ -1,0 +1,29 @@
+argo-rollouts:
+  controller:
+    replicas: 1
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: prometheus
+
+    # Enable Prometheus metrics
+    env:
+      - name: PROMETHEUS_SERVER_ADDRESS
+        value: "http://prometheus-server.monitoring.svc.cluster.local:80"
+
+  dashboard:
+    enabled: true
+    ingress:
+      enabled: false
+    service:
+      type: ClusterIP
