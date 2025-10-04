@@ -27,7 +27,7 @@ prometheus:
 
   # Use default scrape configs to avoid conflicts
   extraScrapeConfigs: |
-    - job_name: 'kubernetes-pods'
+    - job_name: 'kubernetes-pods-annotated'
       kubernetes_sd_configs:
         - role: pod
       relabel_configs:
