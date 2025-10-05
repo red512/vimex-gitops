@@ -1,7 +1,7 @@
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: backend-scaledobject
+  name: backend-scaler
   namespace: {{ .Values.namespace.name }}
 spec:
   scaleTargetRef:
@@ -19,7 +19,7 @@ spec:
       value: "50"
   - type: redis
     metadata:
-      address: redis://redis-service:6379
+      address: redis://redis:6379
       listName: celery
       listLength: "5"
       enableTLS: "false"
