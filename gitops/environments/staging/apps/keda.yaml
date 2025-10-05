@@ -7,10 +7,12 @@ spec:
   project: default
   source:
     repoURL: https://kedacore.github.io/charts
-    targetRevision: 2.11.2
+    targetRevision: 2.12.0
     chart: keda
     helm:
       values: |
+        crds:
+          install: true
         crds:
           install: false
         operator:
