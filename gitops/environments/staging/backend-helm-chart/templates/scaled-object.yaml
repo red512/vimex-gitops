@@ -1,13 +1,13 @@
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: vimex-backend-scaler
-  namespace: backend
+  name: backend-scaler
+  namespace: {{ .Values.namespace.name }}
 spec:
   scaleTargetRef:
     apiVersion: argoproj.io/v1alpha1
     kind: Rollout
-    name: vimex-backend
+    name: backend
   minReplicaCount: 1  
   maxReplicaCount: 10
   cooldownPeriod: 60
