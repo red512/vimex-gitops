@@ -1,0 +1,24 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: vimex-backend-scaler
+  namespace: backend
+spec:
+  scaleTargetRef:
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    name: vimex-backend
+  minReplicaCount: 1  
+  maxReplicaCount: 10
+  cooldownPeriod: 60
+  triggers:
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "50"
+    - type: redis
+      metadata:
+        address: redis://redis-service:6379
+        listName: celery
+        listLength: "5"
+        enableTLS: "false"
