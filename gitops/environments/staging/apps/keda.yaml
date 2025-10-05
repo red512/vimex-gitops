@@ -18,18 +18,3 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
-    - Replace=true
-    - ServerSideApply=true
-  ignoreDifferences:
-    - group: apiextensions.k8s.io
-      kind: CustomResourceDefinition
-      jsonPointers:
-        - /metadata
-        - /status
-    - group: apiregistration.k8s.io
-      kind: APIService
-      name: v1beta1.external.metrics.k8s.io
-      jsonPointers:
-        - /metadata
-        - /status
-        - /spec/caBundle

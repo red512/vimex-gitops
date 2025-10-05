@@ -1,10 +1,6 @@
 keda:
   crds:
     install: true
-    wait: true
-    replicaCount: 1
-
-  webhookEnabled: false  # Disable webhook to avoid cert issues
 
   metricsServer:
     replicaCount: 1
