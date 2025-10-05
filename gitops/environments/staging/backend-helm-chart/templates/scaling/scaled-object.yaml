@@ -19,7 +19,7 @@ spec:
         type: Utilization
         value: "{{ .Values.autoscaling.targetCPUUtilizationPercentage }}"
     # Redis-based scaling
-    - type: redis-list
+    - type: redis
       metadata:
         address: "redis-service:6379"
         listName: {{ .Values.autoscaling.redis.queueName | default "celery" | quote }}
