@@ -1,0 +1,27 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: backend-scaler
+  namespace: {{ .Values.namespace.name }}
+spec:
+  scaleTargetRef:
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    name: backend
+  minReplicaCount: {{ .Values.autoscaling.minReplicas }}
+  maxReplicaCount: {{ .Values.autoscaling.maxReplicas }}
+  pollingInterval: 15
+  cooldownPeriod: 60
+  triggers:
+    # CPU-based scaling
+    - type: cpu
+      metadata:
+        type: Utilization
+        value: "{{ .Values.autoscaling.targetCPUUtilizationPercentage }}"
+    # Redis-based scaling
+    - type: redis
+      metadata:
+        address: "redis.backend:6379"
+        listName: {{ .Values.autoscaling.redis.queueName | default "backend-queue" | quote }}
+        listLength: {{ .Values.autoscaling.redis.targetQueueLength | default "5" | quote }}
+        enableTLS: "false"

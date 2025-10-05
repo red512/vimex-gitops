@@ -52,5 +52,9 @@ spec:
                 secretKeyRef:
                   name: api-key
                   key: API-KEY
+            - name: CELERY_BROKER_URL
+              value: "redis://redis.backend:6379/0"
+            - name: CELERY_RESULT_BACKEND
+              value: "redis://redis.backend:6379/0"
 
 
