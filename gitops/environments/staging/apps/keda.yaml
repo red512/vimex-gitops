@@ -6,9 +6,20 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/red512/vimex-gitops.git
-    targetRevision: HEAD
-    path: gitops/environments/staging/keda-helm-chart
+    chart: keda
+    repoURL: https://kedacore.github.io/charts
+    targetRevision: 2.11.2
+    helm:
+      values: |
+        crds:
+          install: true
+          preserve: true
+        operator:
+          replicaCount: 1
+        metricsServer:
+          replicaCount: 1
+        rbac:
+          create: true
   destination:
     server: https://kubernetes.default.svc
     namespace: keda
