@@ -1,6 +1,8 @@
 keda:
   crds:
     install: true    # Let Helm manage CRDs
+    preserve: true   # Keep CRDs on uninstall
+    createConflicts: "update" # Handle CRD conflicts by updating them
 
   metricsServer:
     replicaCount: 1
