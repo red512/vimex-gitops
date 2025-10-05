@@ -1,14 +1,25 @@
 keda:
-  # Minimal KEDA configuration for staging
   operator:
     replicaCount: 1
+    rbac:
+      create: true  # Ensure RBAC is created
+      rules:  # Add explicit permissions
+        - apiGroups: ["keda.sh"]
+          resources: ["*"]
+          verbs: ["*"]
 
   metricsServer:
     replicaCount: 1
 
-  # Add these settings
   crds:
-    install: true  # This ensures CRDs are installed
-    preserve: true # This preserves CRDs on uninstall
+    install: true    # Explicitly install CRDs
+    preserve: true   # Keep CRDs on uninstall
 
   watchNamespace: "" # Watch all namespaces
+
+  serviceAccount:
+    create: true     # Create service account
+    annotations: {}
+
+  podSecurityContext:
+    runAsNonRoot: true
