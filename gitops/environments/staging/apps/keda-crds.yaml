@@ -8,24 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://kedacore.github.io/charts
-    targetRevision: 2.10.1
-    chart: keda
-    helm:
-      releaseName: keda-crds
-      values: |
-        keda:
-          # Only install CRDs, nothing else
-          operator:
-            enabled: false
-          metricsServer:
-            enabled: false
-          crds:
-            install: true
-          rbac:
-            create: false
-          serviceAccount:
-            create: false
+    repoURL: https://github.com/kedacore/keda.git
+    targetRevision: v2.10.1
+    path: config/crd
   destination:
     server: https://kubernetes.default.svc
     namespace: keda
