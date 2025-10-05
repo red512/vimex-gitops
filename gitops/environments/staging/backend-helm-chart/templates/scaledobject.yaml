@@ -11,11 +11,16 @@ spec:
   pollingInterval: 30
   cooldownPeriod: 120
   minReplicaCount: 1
-  maxReplicaCount: 2
+  maxReplicaCount: 10
   triggers:
+  - type: cpu
+    metadata:
+      type: Utilization
+      value: "50"
   - type: redis
     metadata:
-      address: argocd-redis.argo.svc.cluster.local:6379
-      listName: task_queue
-      listLength: "3"
+      address: redis://redis-service:6379
+      listName: celery
+      listLength: "5"
+      enableTLS: "false"
       activationListLength: "1"
