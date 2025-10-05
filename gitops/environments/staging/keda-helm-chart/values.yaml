@@ -1,0 +1,37 @@
+keda:
+  # KEDA Operator configuration - minimal for staging
+  operator:
+    replicaCount: 1
+
+  # KEDA Metrics Server configuration - minimal for staging
+  metricsServer:
+    replicaCount: 1
+
+  # KEDA Admission Webhooks - minimal for staging
+  webhooks:
+    enabled: true
+    replicaCount: 1
+
+  # Minimal resource requests for staging environment
+  resources:
+    operator:
+      limits:
+        cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 50m
+        memory: 50Mi
+    metricsServer:
+      limits:
+        cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 50m
+        memory: 50Mi
+    webhooks:
+      limits:
+        cpu: 50m
+        memory: 50Mi
+      requests:
+        cpu: 10m
+        memory: 20Mi

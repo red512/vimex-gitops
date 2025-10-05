@@ -1,0 +1,9 @@
+apiVersion: v2
+name: keda-helm-chart
+description: KEDA autoscaler for event-driven scaling
+version: 0.1.0
+appVersion: "2.12.1"
+dependencies:
+  - name: keda
+    version: 2.12.1
+    repository: https://kedacore.github.io/charts
