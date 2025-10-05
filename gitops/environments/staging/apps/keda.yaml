@@ -6,33 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://kedacore.github.io/charts
-    targetRevision: 2.12.0
-    chart: keda
-    helm:
-      values: |
-        crds:
-          install: true
-        crds:
-          install: false
-        operator:
-          replicaCount: 1
-          resources:
-            limits:
-              memory: "256Mi"
-              cpu: "200m"
-            requests:
-              memory: "128Mi"
-              cpu: "100m"
-        metricsServer:
-          replicaCount: 1
-          resources:
-            limits:
-              memory: "128Mi"
-              cpu: "100m"
-            requests:
-              memory: "64Mi"
-              cpu: "50m"
+    repoURL: https://github.com/red512/vimex-gitops.git
+    targetRevision: HEAD
+    path: gitops/environments/staging/keda-helm-chart
   destination:
     server: https://kubernetes.default.svc
     namespace: keda
@@ -42,12 +18,3 @@ spec:
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
-    - Replace=true
-    - ServerSideApply=true
-    - RespectIgnoreDifferences=true
-  ignoreDifferences:
-    - group: apiextensions.k8s.io
-      kind: CustomResourceDefinition
-      name: scaledjobs.keda.sh
-      jsonPointers:
-        - /metadata/annotations
