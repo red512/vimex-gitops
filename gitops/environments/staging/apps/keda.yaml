@@ -12,9 +12,11 @@ spec:
     targetRevision: 2.10.1
     chart: keda
     helm:
+      releaseName: keda
       values: |
         keda:
           operator:
+            enabled: true
             replicaCount: 1
             resources:
               limits:
@@ -24,6 +26,7 @@ spec:
                 memory: "128Mi"
                 cpu: "100m"
           metricsServer:
+            enabled: true
             replicaCount: 1
             resources:
               limits:
@@ -34,6 +37,10 @@ spec:
                 cpu: "50m"
           crds:
             install: false  # CRDs are handled by keda-crds application
+          rbac:
+            create: true  # Create RBAC resources
+          serviceAccount:
+            create: true  # Create service account
   destination:
     server: https://kubernetes.default.svc
     namespace: keda

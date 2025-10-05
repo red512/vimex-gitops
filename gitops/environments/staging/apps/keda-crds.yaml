@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: keda-crds
   namespace: argo
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"  # Install first
 spec:
   project: default
   source:
@@ -10,16 +12,20 @@ spec:
     targetRevision: 2.10.1
     chart: keda
     helm:
+      releaseName: keda-crds
       values: |
         keda:
-          serviceAccount:
-            create: false
+          # Only install CRDs, nothing else
           operator:
             enabled: false
           metricsServer:
             enabled: false
           crds:
             install: true
+          rbac:
+            create: false
+          serviceAccount:
+            create: false
   destination:
     server: https://kubernetes.default.svc
     namespace: keda
