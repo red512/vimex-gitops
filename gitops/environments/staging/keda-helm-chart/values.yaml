@@ -5,3 +5,10 @@ keda:
 
   metricsServer:
     replicaCount: 1
+
+  # Add these settings
+  crds:
+    install: true  # This ensures CRDs are installed
+    preserve: true # This preserves CRDs on uninstall
+
+  watchNamespace: "" # Watch all namespaces
