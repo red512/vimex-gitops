@@ -1,8 +1,10 @@
 keda:
   crds:
     install: true
-    preserve: true
-    wait: true      # Wait for CRDs to be established before proceeding
+    wait: true
+    replicaCount: 1
+
+  webhookEnabled: false  # Disable webhook to avoid cert issues
 
   metricsServer:
     replicaCount: 1
