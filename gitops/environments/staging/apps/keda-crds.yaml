@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keda-crds
+  namespace: argo
+spec:
+  project: default
+  source:
+    repoURL: https://kedacore.github.io/charts
+    targetRevision: 2.10.1
+    chart: keda
+    helm:
+      values: |
+        keda:
+          serviceAccount:
+            create: false
+          operator:
+            enabled: false
+          metricsServer:
+            enabled: false
+          crds:
+            install: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: keda
+  syncPolicy:
+    automated:
+      prune: false  # Don't automatically prune CRDs
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

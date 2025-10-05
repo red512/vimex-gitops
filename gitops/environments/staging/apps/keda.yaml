@@ -3,12 +3,37 @@ kind: Application
 metadata:
   name: keda
   namespace: argo
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"  # Ensure this runs after CRDs
 spec:
   project: default
   source:
-    repoURL: https://github.com/red512/vimex-gitops.git
-    targetRevision: HEAD
-    path: gitops/environments/staging/keda-helm-chart
+    repoURL: https://kedacore.github.io/charts
+    targetRevision: 2.10.1
+    chart: keda
+    helm:
+      values: |
+        keda:
+          operator:
+            replicaCount: 1
+            resources:
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+          metricsServer:
+            replicaCount: 1
+            resources:
+              limits:
+                memory: "128Mi"
+                cpu: "100m"
+              requests:
+                memory: "64Mi"
+                cpu: "50m"
+          crds:
+            install: false  # CRDs are handled by keda-crds application
   destination:
     server: https://kubernetes.default.svc
     namespace: keda
