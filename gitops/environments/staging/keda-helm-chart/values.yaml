@@ -2,34 +2,14 @@ keda:
   operator:
     replicaCount: 1
     rbac:
-      create: true
-      rules:
+      create: true  # Ensure RBAC is created
+      rules:  # Add explicit permissions
         - apiGroups: ["keda.sh"]
-          resources: ["scaledobjects", "triggerauthentications", "scaledjobs"]
-          verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-        - apiGroups: ["apps"]
-          resources: ["deployments", "statefulsets"]
-          verbs: ["get", "list", "watch", "patch"]
-        - apiGroups: ["batch"]
-          resources: ["jobs"]
-          verbs: ["get", "list", "watch", "create", "delete"]
-    resources:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 50m
-        memory: 64Mi
+          resources: ["*"]
+          verbs: ["*"]
 
   metricsServer:
     replicaCount: 1
-    resources:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 50m
-        memory: 64Mi
 
   crds:
     install: true    # Explicitly install CRDs
@@ -38,32 +18,8 @@ keda:
   watchNamespace: "" # Watch all namespaces
 
   serviceAccount:
-    create: true
-    annotations:
-      eks.amazonaws.com/role-arn: "arn:aws:iam::YOUR_AWS_ACCOUNT:role/keda-operator-role"
+    create: true     # Create service account
+    annotations: {}
 
   podSecurityContext:
     runAsNonRoot: true
-    runAsUser: 1000
-    fsGroup: 2000
-
-  nodeSelector:
-    kubernetes.io/os: linux
-
-  tolerations:
-    - key: "CriticalAddonsOnly"
-      operator: "Exists"
-
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: kubernetes.io/os
-            operator: In
-            values:
-            - linux
-
-  podAnnotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "8080"
