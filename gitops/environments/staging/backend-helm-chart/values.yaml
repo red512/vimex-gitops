@@ -1,4 +1,15 @@
 replicaCount: 1
+
+worker:
+  replicaCount: 1
+  resources:
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+
 image:
   repository: projectred521/flask-w
   tag: v1.0.21

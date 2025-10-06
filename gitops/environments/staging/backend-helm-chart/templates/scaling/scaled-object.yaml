@@ -20,13 +20,7 @@ spec:
       metadata:
         address: "10.109.162.45:6379"
         listName: {{ .Values.autoscaling.redis.queueName | default "celery" | quote }}
-        listLength: "5"
-        activationListLength: "3"
+        listLength: {{ .Values.autoscaling.redis.targetQueueLength | default "5" | quote }}
+        activationListLength: "1"
         databaseIndex: "0"
         enableTLS: "false"
-        scaleUp:
-          amount: 1
-          threshold: 10
-        scaleDown:
-          amount: 1
-          threshold: 3

@@ -1,16 +1,23 @@
-# HPA commented out - replaced by KEDA ScaledObject for queue-based autoscaling
-# apiVersion: autoscaling/v1
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   name: backend-hpa
-#   namespace: {{ .Values.namespace.name }}
-#   labels:
-#     app: backend
-# spec:
-#   scaleTargetRef:
-#     apiVersion: argoproj.io/v1alpha1
-#     kind: Rollout
-#     name: backend
-#   minReplicas: {{ .Values.autoscaling.minReplicas }}
-#   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
-#   targetCPUUtilizationPercentage: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: backend
+spec:
+  scaleTargetRef:
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    name: backend
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
