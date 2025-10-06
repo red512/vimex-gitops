@@ -1,8 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: worker
-  namespace: {{ .Values.namespace.name }}
+  name: wo        readines        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - python3 -m celery -A app.celery inspect ping
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10         exec:
+            command:
+            - /bin/sh
+            - -c
+            - python3 -m celery -A app.celery inspect ping
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 10mespace: {{ .Values.namespace.name }}
   labels:
     app: worker
   annotations:
@@ -21,25 +35,18 @@ spec:
       labels:
         app: worker
     spec:
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
       containers:
       - name: celery
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         workingDir: /app
-        command: ["/usr/local/bin/celery"]
+        command: ["celery"]
         args:
           - "-A"
           - "app.celery"
           - "worker"
           - "--loglevel=info"
-          - "--concurrency=2"
-          - "--prefetch-multiplier=1"
-          - "--max-tasks-per-child=100"
-          - "--uid=1000"
+          - "--concurrency=1"
         env:
           - name: API_KEY
             valueFrom:
@@ -47,9 +54,11 @@ spec:
                 name: api-key
                 key: API-KEY
           - name: CELERY_BROKER_URL
-            value: "redis://redis-redis-chart:6379/0"
+            value: "redis://redis:6379/0"
           - name: CELERY_RESULT_BACKEND
-            value: "redis://redis-redis-chart:6379/0"
+            value: "redis://redis:6379/0"
+          - name: C_FORCE_ROOT
+            value: "true"
         resources:
           {{- if .Values.worker.resources }}
           {{- toYaml .Values.worker.resources | nindent 10 }}
@@ -66,17 +75,16 @@ spec:
             command:
             - /bin/sh
             - -c
-            - /usr/local/bin/celery -A app.celery inspect ping
+            - celery -A app.celery inspect ping
           initialDelaySeconds: 20
           periodSeconds: 10
           failureThreshold: 30
-          timeoutSeconds: 10
         readinessProbe:
           exec:
             command:
             - /bin/sh
             - -c
-            - /usr/local/bin/celery -A app.celery inspect ping
+            - celery -A app.celery inspect ping
           initialDelaySeconds: 15
           periodSeconds: 30
           timeoutSeconds: 10
@@ -85,7 +93,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - /usr/local/bin/celery -A app.celery inspect ping
+            - celery -A app.celery inspect ping
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 10
