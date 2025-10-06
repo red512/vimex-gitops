@@ -1,22 +1,8 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: wo        readines        livenessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - python3 -m celery -A app.celery inspect ping
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 10         exec:
-            command:
-            - /bin/sh
-            - -c
-            - python3 -m celery -A app.celery inspect ping
-          initialDelaySeconds: 15
-          periodSeconds: 30
-          timeoutSeconds: 10mespace: {{ .Values.namespace.name }}
+  name: worker
+  namespace: {{ .Values.namespace.name }}
   labels:
     app: worker
   annotations:
@@ -81,6 +67,7 @@ spec:
           initialDelaySeconds: 20
           periodSeconds: 10
           failureThreshold: 30
+          timeoutSeconds: 10
         readinessProbe:
           exec:
             command:
