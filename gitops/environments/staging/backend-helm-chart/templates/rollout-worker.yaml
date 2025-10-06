@@ -26,8 +26,10 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         workingDir: /app
-        command: ["celery"]
+        command: ["python3"]
         args:
+          - "-m"
+          - "celery"
           - "-A"
           - "app.celery"
           - "worker"
@@ -63,7 +65,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - celery -A app.celery inspect ping
+            - python3 -m celery -A app.celery inspect ping
           initialDelaySeconds: 20
           periodSeconds: 10
           failureThreshold: 30
@@ -73,7 +75,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - celery -A app.celery inspect ping
+            - python3 -m celery -A app.celery inspect ping
           initialDelaySeconds: 15
           periodSeconds: 30
           timeoutSeconds: 10
@@ -82,7 +84,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - celery -A app.celery inspect ping
+            - python3 -m celery -A app.celery inspect ping
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 10
