@@ -8,12 +8,9 @@ metadata:
 spec:
   replicas: {{ .Values.worker.replicaCount | default 1 }}
   strategy:
-    canary:
-      steps:
-      - setWeight: 50
-      - pause: {duration: 10s}
-      - setWeight: 100
-      scaleDownDelaySeconds: 60
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   selector:
     matchLabels:
       app: celery-worker
