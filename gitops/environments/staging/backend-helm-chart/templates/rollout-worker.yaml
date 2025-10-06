@@ -46,7 +46,9 @@ spec:
           - "app.celery"
           - "worker"
           - "--loglevel=info"
-          - "--concurrency=1"
+          - "--concurrency=2"
+          - "--prefetch-multiplier=1"
+          - "--max-tasks-per-child=100"
         env:
           - name: API_KEY
             valueFrom:
@@ -54,9 +56,9 @@ spec:
                 name: api-key
                 key: API-KEY
           - name: CELERY_BROKER_URL
-            value: "redis://redis:6379/0"
+            value: "redis://redis-redis-chart:6379/0"
           - name: CELERY_RESULT_BACKEND
-            value: "redis://redis:6379/0"
+            value: "redis://redis-redis-chart:6379/0"
           - name: C_FORCE_ROOT
             value: "true"
         resources:
