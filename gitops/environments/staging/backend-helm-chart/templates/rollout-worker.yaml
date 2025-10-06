@@ -25,7 +25,14 @@ spec:
       - name: celery
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-        command: ["celery", "-A", "app.celery", "worker", "--loglevel=info"]
+        workingDir: /app
+        command: ["celery"]
+        args:
+          - "-A"
+          - "app.celery"
+          - "worker"
+          - "--loglevel=info"
+          - "--concurrency=1"
         env:
           - name: API_KEY
             valueFrom:
@@ -33,9 +40,11 @@ spec:
                 name: api-key
                 key: API-KEY
           - name: CELERY_BROKER_URL
-            value: "redis://10.107.227.255:6379/0"
+            value: "redis://redis:6379/0"
           - name: CELERY_RESULT_BACKEND
-            value: "redis://10.107.227.255:6379/0"
+            value: "redis://redis:6379/0"
+          - name: C_FORCE_ROOT
+            value: "true"
         resources:
           {{- if .Values.worker.resources }}
           {{- toYaml .Values.worker.resources | nindent 10 }}
@@ -47,3 +56,30 @@ spec:
             cpu: "500m"
             memory: "256Mi"
           {{- end }}
+        startupProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - celery -A app.celery inspect ping
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 30
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - celery -A app.celery inspect ping
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - celery -A app.celery inspect ping
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
