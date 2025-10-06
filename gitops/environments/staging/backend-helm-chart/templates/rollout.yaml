@@ -23,13 +23,6 @@ spec:
       - pause: {duration: 5s}
       - setWeight: 80
       - pause: {duration: 10s}
-      analysis:
-        templates:
-        - templateName: success-rate
-        startingStep: 2
-        args:
-        - name: service-name
-          value: backend-service
       scaleDownDelaySeconds: 300  # 5 minutes delay before scaling down
       scaleDownDelayRevisionLimit: 2
   selector:
