@@ -1,10 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: celery-worker
+  name: worker
   namespace: {{ .Values.namespace.name }}
   labels:
-    app: celery-worker
+    app: worker
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   replicas: {{ .Values.worker.replicaCount | default 1 }}
   strategy:
@@ -13,11 +15,11 @@ spec:
       - setWeight: 100
   selector:
     matchLabels:
-      app: celery-worker
+      app: worker
   template:
     metadata:
       labels:
-        app: celery-worker
+        app: worker
     spec:
       containers:
       - name: celery

@@ -1,13 +1,16 @@
+{{- if .Values.autoscaling.enabled }}
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: backend-scaler
+  name: worker-scaler
   namespace: {{ .Values.namespace.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   scaleTargetRef:
     apiVersion: argoproj.io/v1alpha1
     kind: Rollout
-    name: celery-worker
+    name: worker
   minReplicaCount: 1
   maxReplicaCount: 3
   pollingInterval: 15  # Check every 15 seconds
@@ -24,3 +27,4 @@ spec:
         activationListLength: "1"
         databaseIndex: "0"
         enableTLS: "false"
+{{- end }}
