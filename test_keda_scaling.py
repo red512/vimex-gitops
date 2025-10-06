@@ -6,7 +6,6 @@ This script tests KEDA scaling by:
 1. Adding tasks to the Redis queue
 2. Monitoring queue length
 3. Monitoring pod scaling behavior
-4. Providing real-time feedback
 
 Usage:
     python test_keda_scaling.py --add-tasks 15
@@ -14,13 +13,11 @@ Usage:
     python test_keda_scaling.py --clear-queue
 """
 
-import redis
 import subprocess
 import time
 import json
 import argparse
 from datetime import datetime
-from typing import Dict, List, Any
 
 class KEDAScalingTester:
     def __init__(self, redis_host='redis-redis-chart', redis_port=6379, redis_db=0,
@@ -31,130 +28,121 @@ class KEDAScalingTester:
         self.redis_db = redis_db
         self.namespace = namespace
         self.queue_name = queue_name
-        self.redis_client = None
 
-    def connect_redis(self) -> bool:
-        """Connect to Redis server."""
+    def get_backend_pod(self):
+        """Get the first available backend pod name."""
         try:
-            # For local testing (outside cluster)
-            try:
-                self.redis_client = redis.Redis(
-                    host=self.redis_host,
-                    port=self.redis_port,
-                    db=self.redis_db,
-                    decode_responses=True
-                )
-                self.redis_client.ping()
-                print(f"✅ Connected to Redis at {self.redis_host}:{self.redis_port}/{self.redis_db}")
-                return True
-            except:
-                # If direct connection fails, try through kubectl port-forward
-                print("⚠️  Direct Redis connection failed, trying kubectl exec...")
-                return self._test_redis_via_kubectl()
+            cmd = ['kubectl', 'get', 'pods', '-n', self.namespace, '-l', 'app=backend', '-o', 'json']
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                pods_data = json.loads(result.stdout)
+                running_pods = [pod for pod in pods_data['items']
+                              if pod['status']['phase'] == 'Running']
+                if running_pods:
+                    return running_pods[0]['metadata']['name']
         except Exception as e:
-            print(f"❌ Failed to connect to Redis: {e}")
-            return False
+            print(f"⚠️  Could not get backend pod: {e}")
+        return None
 
-    def _test_redis_via_kubectl(self) -> bool:
-        """Test Redis connection via kubectl exec."""
+    def execute_redis_command(self, command: str):
+        """Execute a Redis command via kubectl exec."""
+        pod_name = self.get_backend_pod()
+        if not pod_name:
+            print("❌ No running backend pod found")
+            return None
+
         try:
             cmd = [
                 'kubectl', 'exec', '-n', self.namespace,
-                'deployment/backend', '--', 'python3', '-c',
-                f"import redis; r=redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db}); print('Connected:', r.ping())"
+                pod_name, '--', 'python3', '-c', command
             ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            if result.returncode == 0 and 'Connected: True' in result.stdout:
-                print("✅ Redis connection verified via kubectl")
-                return True
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                return result.stdout.strip()
             else:
-                print(f"❌ Redis connection failed: {result.stderr}")
-                return False
+                print(f"❌ Command failed: {result.stderr}")
+                return None
         except Exception as e:
-            print(f"❌ kubectl exec failed: {e}")
+            print(f"❌ Failed to execute command: {e}")
+            return None
+
+    def test_redis_connection(self) -> bool:
+        """Test Redis connection."""
+        command = f"""
+import redis
+try:
+    r = redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db})
+    print('Connected:', r.ping())
+except Exception as e:
+    print('Connection failed:', e)
+"""
+        result = self.execute_redis_command(command)
+        if result and 'Connected: True' in result:
+            print("✅ Redis connection verified")
+            return True
+        else:
+            print(f"❌ Redis connection failed: {result}")
             return False
 
     def get_queue_length(self) -> int:
         """Get current queue length."""
-        if self.redis_client:
-            try:
-                return self.redis_client.llen(self.queue_name)
-            except:
-                pass
-
-        # Fallback to kubectl exec
+        command = f"""
+import redis
+try:
+    r = redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db})
+    print(r.llen('{self.queue_name}'))
+except Exception as e:
+    print('0')
+"""
+        result = self.execute_redis_command(command)
         try:
-            cmd = [
-                'kubectl', 'exec', '-n', self.namespace,
-                'deployment/backend', '--', 'python3', '-c',
-                f"import redis; r=redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db}); print(r.llen('{self.queue_name}'))"
-            ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            if result.returncode == 0:
-                return int(result.stdout.strip().split('\n')[-1])
-        except Exception as e:
-            print(f"⚠️  Could not get queue length: {e}")
-        return 0
+            return int(result.split('\n')[-1]) if result else 0
+        except:
+            return 0
 
     def add_tasks_to_queue(self, num_tasks: int) -> bool:
         """Add tasks to the Redis queue."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        if self.redis_client:
-            try:
-                for i in range(num_tasks):
-                    task_data = f"test_task_{timestamp}_{i+1}"
-                    self.redis_client.lpush(self.queue_name, task_data)
-                print(f"✅ Added {num_tasks} tasks to queue via direct connection")
-                return True
-            except:
-                pass
+        # Create tasks list for Redis command
+        tasks_list = ", ".join([f"'test_task_{timestamp}_{i+1}'" for i in range(num_tasks)])
 
-        # Fallback to kubectl exec
-        try:
-            tasks_str = ', '.join([f'"test_task_{timestamp}_{i+1}"' for i in range(num_tasks)])
-            cmd = [
-                'kubectl', 'exec', '-n', self.namespace,
-                'deployment/backend', '--', 'python3', '-c',
-                f"import redis; r=redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db}); [r.lpush('{self.queue_name}', task) for task in [{tasks_str}]]; print('Added {num_tasks} tasks')"
-            ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-            if result.returncode == 0:
-                print(f"✅ Added {num_tasks} tasks to queue via kubectl")
-                return True
-            else:
-                print(f"❌ Failed to add tasks: {result.stderr}")
-                return False
-        except Exception as e:
-            print(f"❌ Failed to add tasks via kubectl: {e}")
+        command = f"""
+import redis
+try:
+    r = redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db})
+    tasks = [{tasks_list}]
+    for task in tasks:
+        r.lpush('{self.queue_name}', task)
+    print(f'Added {num_tasks} tasks to queue')
+except Exception as e:
+    print('Failed:', e)
+"""
+        result = self.execute_redis_command(command)
+        if result and f'Added {num_tasks} tasks' in result:
+            print(f"✅ Added {num_tasks} tasks to queue")
+            return True
+        else:
+            print(f"❌ Failed to add tasks: {result}")
             return False
 
     def clear_queue(self) -> bool:
         """Clear all tasks from the queue."""
-        if self.redis_client:
-            try:
-                cleared = self.redis_client.delete(self.queue_name)
-                print(f"✅ Cleared queue via direct connection (removed {cleared} keys)")
-                return True
-            except:
-                pass
-
-        # Fallback to kubectl exec
-        try:
-            cmd = [
-                'kubectl', 'exec', '-n', self.namespace,
-                'deployment/backend', '--', 'python3', '-c',
-                f"import redis; r=redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db}); print('Cleared:', r.delete('{self.queue_name}'))"
-            ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            if result.returncode == 0:
-                print("✅ Queue cleared via kubectl")
-                return True
-            else:
-                print(f"❌ Failed to clear queue: {result.stderr}")
-                return False
-        except Exception as e:
-            print(f"❌ Failed to clear queue via kubectl: {e}")
+        command = f"""
+import redis
+try:
+    r = redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db})
+    cleared = r.delete('{self.queue_name}')
+    print(f'Cleared {cleared} queue(s)')
+except Exception as e:
+    print('Failed:', e)
+"""
+        result = self.execute_redis_command(command)
+        if result and 'Cleared' in result:
+            print("✅ Queue cleared")
+            return True
+        else:
+            print(f"❌ Failed to clear queue: {result}")
             return False
 
     def get_pod_count(self) -> int:
@@ -171,7 +159,7 @@ class KEDAScalingTester:
             print(f"⚠️  Could not get pod count: {e}")
         return 0
 
-    def get_keda_status(self) -> Dict[str, Any]:
+    def get_keda_status(self):
         """Get KEDA ScaledObject status."""
         try:
             cmd = ['kubectl', 'get', 'scaledobjects', '-n', self.namespace, '-o', 'json']
@@ -180,19 +168,25 @@ class KEDAScalingTester:
                 data = json.loads(result.stdout)
                 if data['items']:
                     scaled_obj = data['items'][0]
+                    # Get status from conditions
+                    conditions = scaled_obj.get('status', {}).get('conditions', [])
+                    ready_status = 'Unknown'
+                    for condition in conditions:
+                        if condition.get('type') == 'Ready':
+                            ready_status = condition.get('status', 'Unknown')
+                            break
+
                     return {
                         'name': scaled_obj['metadata']['name'],
-                        'ready': scaled_obj['status'].get('conditions', [{}])[0].get('status', 'Unknown'),
-                        'active': scaled_obj['status'].get('scaleTargetGVKR', {}).get('kind', 'Unknown'),
-                        'current_replicas': scaled_obj['status'].get('externalMetricNames', []),
+                        'ready': ready_status,
                         'triggers': len(scaled_obj['spec'].get('triggers', []))
                     }
         except Exception as e:
             print(f"⚠️  Could not get KEDA status: {e}")
-        return {'name': 'Unknown', 'ready': 'Unknown', 'active': 'Unknown', 'triggers': 0}
+        return {'name': 'Unknown', 'ready': 'Unknown', 'triggers': 0}
 
     def monitor_scaling(self, duration_minutes: int = 5, check_interval: int = 15):
-        """Monitor scaling behavior for a specified duration."""
+        """Monitor scaling behavior."""
         print(f"\n🔍 Monitoring KEDA scaling for {duration_minutes} minutes...")
         print(f"📊 Checking every {check_interval} seconds")
         print("=" * 80)
@@ -201,7 +195,7 @@ class KEDAScalingTester:
         end_time = start_time + (duration_minutes * 60)
 
         # Print header
-        print(f"{'Time':<12} {'Queue':<8} {'Pods':<6} {'KEDA Status':<15} {'Action'}")
+        print(f"{'Time':<12} {'Queue':<8} {'Pods':<6} {'KEDA Ready':<12} {'Action'}")
         print("-" * 80)
 
         while time.time() < end_time:
@@ -222,7 +216,7 @@ class KEDAScalingTester:
 
             keda_ready = keda_status.get('ready', 'Unknown')
 
-            print(f"{current_time:<12} {queue_length:<8} {pod_count:<6} {keda_ready:<15} {action}")
+            print(f"{current_time:<12} {queue_length:<8} {pod_count:<6} {keda_ready:<12} {action}")
 
             time.sleep(check_interval)
 
@@ -234,8 +228,8 @@ class KEDAScalingTester:
         print("🚀 KEDA Redis Queue Scaling Test")
         print("=" * 50)
 
-        # Step 1: Connect to Redis
-        if not self.connect_redis():
+        # Step 1: Test Redis connection
+        if not self.test_redis_connection():
             print("❌ Cannot connect to Redis. Exiting.")
             return False
 
@@ -296,7 +290,7 @@ def main():
 
     if args.clear_queue:
         print("🧹 Clearing Redis queue...")
-        if tester.connect_redis():
+        if tester.test_redis_connection():
             tester.clear_queue()
             print(f"✅ Queue cleared. Current length: {tester.get_queue_length()}")
         else:
@@ -304,7 +298,7 @@ def main():
 
     elif args.monitor_only:
         print("🔍 Monitoring KEDA scaling status...")
-        if tester.connect_redis():
+        if tester.test_redis_connection():
             tester.monitor_scaling(duration_minutes=args.duration)
         else:
             print("❌ Could not connect to Redis")

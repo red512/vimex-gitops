@@ -21,7 +21,7 @@ spec:
     # Redis-based scaling
     - type: redis
       metadata:
-        address: "redis-redis-chart:6379"
+        address: "10.109.162.45:6379"
         listName: {{ .Values.autoscaling.redis.queueName | default "celery" | quote }}
         listLength: {{ .Values.autoscaling.redis.targetQueueLength | default "5" | quote }}
         databaseIndex: "0"
