@@ -4,11 +4,11 @@ worker:
   replicaCount: 1
   resources:
     limits:
-      memory: "256Mi"
-      cpu: "500m"
+      memory: "128Mi"
+      cpu: "250m"
     requests:
       memory: "128Mi"
-      cpu: "100m"
+      cpu: "250m"
 
 image:
   repository: projectred521/flask-w
@@ -16,11 +16,11 @@ image:
   pullPolicy: IfNotPresent
 resources:
   limits:
-    memory: "256Mi"
-    cpu: "500m"
+    memory: "128Mi"
+    cpu: "250m"
   requests:
     memory: "128Mi"
-    cpu: "100m"
+    cpu: "250m"
 autoscaling:
   enabled: true
   minReplicas: 1
