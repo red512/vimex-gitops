@@ -21,6 +21,10 @@ spec:
       labels:
         app: worker
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
       - name: celery
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -35,6 +39,7 @@ spec:
           - "--concurrency=2"
           - "--prefetch-multiplier=1"
           - "--max-tasks-per-child=100"
+          - "--uid=1000"
         env:
           - name: API_KEY
             valueFrom:
@@ -45,8 +50,6 @@ spec:
             value: "redis://redis-redis-chart:6379/0"
           - name: CELERY_RESULT_BACKEND
             value: "redis://redis-redis-chart:6379/0"
-          - name: C_FORCE_ROOT
-            value: "true"
         resources:
           {{- if .Values.worker.resources }}
           {{- toYaml .Values.worker.resources | nindent 10 }}
@@ -67,6 +70,7 @@ spec:
           initialDelaySeconds: 20
           periodSeconds: 10
           failureThreshold: 30
+          timeoutSeconds: 10
         readinessProbe:
           exec:
             command:
