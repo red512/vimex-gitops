@@ -7,39 +7,26 @@ spec:
   scaleTargetRef:
     apiVersion: argoproj.io/v1alpha1
     kind: Rollout
-    name: backend
-  minReplicaCount: {{ .Values.autoscaling.minReplicas }}
-  maxReplicaCount: {{ .Values.autoscaling.maxReplicas }}
-  pollingInterval: 30
-  cooldownPeriod: 300  # 5 minutes cooldown
-  advanced:
-    horizontalPodAutoscalerConfig:
-      behavior:
-        scaleDown:
-          stabilizationWindowSeconds: 100  # 2minutes
-          policies:
-          - type: Percent
-            value: 50
-            periodSeconds: 300
-        scaleUp:
-          stabilizationWindowSeconds: 60
-          policies:
-          - type: Pods
-            value: 1
-            periodSeconds: 60
-          selectPolicy: Max
+    name: celery-worker
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  pollingInterval: 15  # Check every 15 seconds
+  cooldownPeriod: 60   # Wait 1 minute before scaling down
+  fallback:
+    failureThreshold: 3
+    replicas: 1
   triggers:
-    # CPU-based scaling
-    - type: cpu
-      metadata:
-        type: Utilization
-        value: "{{ .Values.autoscaling.targetCPUUtilizationPercentage }}"
-    # Redis-based scaling
     - type: redis
       metadata:
         address: "10.109.162.45:6379"
         listName: {{ .Values.autoscaling.redis.queueName | default "celery" | quote }}
-        listLength: {{ .Values.autoscaling.redis.targetQueueLength | default "5" | quote }}
-        activationListLength: "3"  # Start scaling when queue length exceeds 3
+        listLength: "5"
+        activationListLength: "3"
         databaseIndex: "0"
         enableTLS: "false"
+        scaleUp:
+          amount: 1
+          threshold: 10
+        scaleDown:
+          amount: 1
+          threshold: 3

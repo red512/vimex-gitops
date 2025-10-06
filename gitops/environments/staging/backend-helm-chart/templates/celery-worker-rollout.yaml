@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: celery-worker
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: celery-worker
+spec:
+  replicas: {{ .Values.worker.replicaCount | default 1 }}
+  strategy:
+    canary:
+      steps:
+      - setWeight: 50
+      - pause: {duration: 10s}
+      - setWeight: 100
+      scaleDownDelaySeconds: 60
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      containers:
+      - name: celery
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: ["celery", "-A", "app.celery", "worker", "--loglevel=info"]
+        env:
+          - name: API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: api-key
+                key: API-KEY
+          - name: CELERY_BROKER_URL
+            value: "redis://redis:6379/0"
+          - name: CELERY_RESULT_BACKEND
+            value: "redis://redis:6379/0"
+        resources:
+          {{- if .Values.worker.resources }}
+          {{- toYaml .Values.worker.resources | nindent 10 }}
+          {{- else }}
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+          {{- end }}
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - celery -A app.celery inspect ping -d celery@$HOSTNAME
+          initialDelaySeconds: 15
+          periodSeconds: 10

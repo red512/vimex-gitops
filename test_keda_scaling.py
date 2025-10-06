@@ -132,8 +132,8 @@ except Exception as e:
 import redis
 try:
     r = redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db})
-    cleared = r.delete('{self.queue_name}')
-    print(f'Cleared {cleared} queue(s)')
+    num_cleared = r.delete('{self.queue_name}')
+    print(f'Cleared {{num_cleared}} queue(s)')
 except Exception as e:
     print('Failed:', e)
 """
@@ -278,8 +278,8 @@ def main():
                        help='Monitoring duration in minutes (default: 5)')
     parser.add_argument('--namespace', default='backend',
                        help='Kubernetes namespace (default: backend)')
-    parser.add_argument('--redis-host', default='redis-redis-chart',
-                       help='Redis host (default: redis-redis-chart)')
+    parser.add_argument('--redis-host', default='10.109.162.45',
+                       help='Redis host (default: 10.109.162.45)')
 
     args = parser.parse_args()
 
