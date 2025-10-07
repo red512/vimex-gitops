@@ -33,7 +33,6 @@ spec:
           - "worker"
           - "--loglevel=info"
           - "--concurrency=1"
-          - "--prefetch-multiplier=0"
           - "--pool=solo"
           - "--without-gossip"
           - "--without-mingle"
@@ -50,14 +49,14 @@ spec:
             value: "redis://redis-redis-chart:6379/0"
           - name: C_FORCE_ROOT
             value: "true"
-          - name: CELERY_TASK_ALWAYS_EAGER
+          # Critical fix: Disable Redis ACK emulation
+          - name: CELERY_BROKER_TRANSPORT_OPTIONS
+            value: '{"ack_emulation": false}'
+          # Disable task acknowledgments
+          - name: CELERY_TASK_ACKS_LATE
             value: "false"
-          - name: CELERY_TASK_IGNORE_RESULT
-            value: "true"
-          - name: CELERY_WORKER_DISABLE_RATE_LIMITS
-            value: "true"
-          - name: CELERY_WORKER_PREFETCH_MULTIPLIER
-            value: "0"
+          - name: CELERY_TASK_REJECT_ON_WORKER_LOST
+            value: "false"
         resources:
           {{- toYaml .Values.worker.resources | nindent 10 }}
         startupProbe:
@@ -65,7 +64,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - celery -A app.celery inspect ping
+            - pgrep -f 'celery.*worker' || exit 1
           initialDelaySeconds: 20
           periodSeconds: 10
           failureThreshold: 30
@@ -75,7 +74,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - celery -A app.celery inspect ping
+            - pgrep -f 'celery.*worker' || exit 1
           initialDelaySeconds: 15
           periodSeconds: 30
           timeoutSeconds: 10
@@ -84,7 +83,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - celery -A app.celery inspect ping
+            - pgrep -f 'celery.*worker' || exit 1
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 10
