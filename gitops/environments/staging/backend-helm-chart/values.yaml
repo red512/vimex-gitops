@@ -12,7 +12,7 @@ worker:
 
 image:
   repository: projectred521/flask-w
-  tag: v1.0.28
+  tag: v1.0.29
   pullPolicy: IfNotPresent
 resources:
   limits:
