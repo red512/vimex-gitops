@@ -64,18 +64,18 @@ spec:
             command:
             - /bin/sh
             - -c
-            - pgrep -f 'celery.*worker' || exit 1
-          initialDelaySeconds: 20
-          periodSeconds: 10
-          failureThreshold: 30
+            - "celery -A app.celery inspect ping --timeout=5 || exit 1"
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          failureThreshold: 20
           timeoutSeconds: 10
         readinessProbe:
           exec:
             command:
             - /bin/sh
             - -c
-            - pgrep -f 'celery.*worker' || exit 1
-          initialDelaySeconds: 15
+            - "celery -A app.celery inspect ping --timeout=3 || exit 1"
+          initialDelaySeconds: 35
           periodSeconds: 30
           timeoutSeconds: 10
         livenessProbe:
@@ -83,7 +83,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - pgrep -f 'celery.*worker' || exit 1
-          initialDelaySeconds: 30
-          periodSeconds: 30
+            - "celery -A app.celery inspect ping --timeout=3 || exit 1"
+          initialDelaySeconds: 40
+          periodSeconds: 60
           timeoutSeconds: 10
