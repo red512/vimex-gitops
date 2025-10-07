@@ -115,9 +115,17 @@ try:
     num_tasks = {num_tasks}
     timestamp = "{timestamp}"
     
+    # Use real city names for successful weather API calls
+    real_cities = [
+        "London", "New York", "Tokyo", "Paris", "Berlin",
+        "Madrid", "Rome", "Amsterdam", "Sydney", "Toronto",
+        "Mumbai", "Dubai", "Singapore", "Barcelona", "Vienna",
+        "Prague", "Stockholm", "Oslo", "Copenhagen", "Helsinki"
+    ]
+    
     for i in range(num_tasks):
         task_id = str(uuid.uuid4())
-        city_name = f"TestCity_{{timestamp}}_{{i+1}}"
+        city_name = real_cities[i % len(real_cities)]
         
         # Create Celery task body (what gets executed)
         task_body = [
