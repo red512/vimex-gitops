@@ -21,7 +21,6 @@ spec:
   triggers:
     - type: redis
       metadata:
-        # Use fully qualified service name with namespace
         address: "redis-redis-chart.{{ .Values.namespace.name }}.svc.cluster.local:6379"
         listName: {{ .Values.autoscaling.redis.queueName | default "celery" | quote }}
         listLength: {{ .Values.autoscaling.redis.targetQueueLength | default "5" | quote }}
