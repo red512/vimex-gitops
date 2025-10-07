@@ -32,9 +32,12 @@ spec:
           - "app.celery"
           - "worker"
           - "--loglevel=info"
-          - "--concurrency=2"
-          - "--prefetch-multiplier=1"
-          - "--max-tasks-per-child=100"
+          - "--concurrency=1"
+          - "--prefetch-multiplier=0"
+          - "--pool=solo"
+          - "--without-gossip"
+          - "--without-mingle"
+          - "--without-heartbeat"
         env:
           - name: API_KEY
             valueFrom:
@@ -47,6 +50,14 @@ spec:
             value: "redis://redis-redis-chart:6379/0"
           - name: C_FORCE_ROOT
             value: "true"
+          - name: CELERY_TASK_ALWAYS_EAGER
+            value: "false"
+          - name: CELERY_TASK_IGNORE_RESULT
+            value: "true"
+          - name: CELERY_WORKER_DISABLE_RATE_LIMITS
+            value: "true"
+          - name: CELERY_WORKER_PREFETCH_MULTIPLIER
+            value: "0"
         resources:
           {{- toYaml .Values.worker.resources | nindent 10 }}
         startupProbe:
