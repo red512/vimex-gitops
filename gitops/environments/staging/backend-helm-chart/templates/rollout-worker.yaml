@@ -8,9 +8,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  # REMOVED: Let KEDA manage replicas, not the Rollout spec
-  # replicas: {{ .Values.worker.replicaCount | default 1 }}
-  
+  replicas: {{ .Values.worker.replicaCount | default 1 }}
   strategy:
     canary:
       steps:
@@ -35,6 +33,7 @@ spec:
           - "worker"
           - "--loglevel=info"
           - "--concurrency=1"
+          - "--prefetch-multiplier=0"
           - "--pool=solo"
           - "--without-gossip"
           - "--without-mingle"
@@ -51,45 +50,33 @@ spec:
             value: "redis://redis-redis-chart:6379/0"
           - name: C_FORCE_ROOT
             value: "true"
-          # REMOVED: These env vars don't work - we configured in app.py instead
-          # - name: CELERY_BROKER_TRANSPORT_OPTIONS
-          # - name: CELERY_TASK_ACKS_LATE
-          # - name: CELERY_TASK_REJECT_ON_WORKER_LOST
-          
-          # ADD: Task delay for KEDA testing
-          - name: TASK_PROCESSING_DELAY
-            value: "30"  # 30 seconds - set to "0" for production
         resources:
           {{- toYaml .Values.worker.resources | nindent 10 }}
-        
-        # FIXED: Use simple process check instead of celery inspect
         startupProbe:
           exec:
             command:
             - /bin/sh
             - -c
-            - pgrep -f 'celery.*worker' || exit 1
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          failureThreshold: 12  # 60 seconds total (12 * 5)
-          timeoutSeconds: 3
-        
+            - celery -A app.celery inspect ping
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 30
+          timeoutSeconds: 10
         readinessProbe:
           exec:
             command:
             - /bin/sh
             - -c
-            - pgrep -f 'celery.*worker' || exit 1
+            - celery -A app.celery inspect ping
           initialDelaySeconds: 15
-          periodSeconds: 10
-          timeoutSeconds: 3
-        
+          periodSeconds: 30
+          timeoutSeconds: 10
         livenessProbe:
           exec:
             command:
             - /bin/sh
             - -c
-            - pgrep -f 'celery.*worker' || exit 1
-          initialDelaySeconds: 20
+            - celery -A app.celery inspect ping
+          initialDelaySeconds: 30
           periodSeconds: 30
-          timeoutSeconds: 3
+          timeoutSeconds: 10
