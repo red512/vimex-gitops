@@ -101,26 +101,90 @@ except Exception as e:
             return 0
 
     def add_tasks_to_queue(self, num_tasks: int) -> bool:
-        """Add tasks to the Redis queue."""
+        """Add properly formatted Celery tasks to the Redis queue."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-        # Create tasks list for Redis command
-        tasks_list = ", ".join([f"'test_task_{timestamp}_{i+1}'" for i in range(num_tasks)])
 
         command = f"""
 import redis
+import json
+import uuid
 try:
     r = redis.Redis(host='{self.redis_host}', port={self.redis_port}, db={self.redis_db})
-    tasks = [{tasks_list}]
-    for task in tasks:
-        r.lpush('{self.queue_name}', task)
-    print(f'Added {num_tasks} tasks to queue')
+    
+    num_tasks = {num_tasks}
+    timestamp = "{timestamp}"
+    
+    for i in range(num_tasks):
+        # Create proper Celery task format
+        task_id = str(uuid.uuid4())
+        city_name = f"TestCity_{{timestamp}}_{{i+1}}"
+        
+        # Proper Kombu message envelope with base64 encoded body
+        import base64
+        
+        task_body = [
+            [city_name],  # args
+            {{}},         # kwargs  
+            {{            # embed
+                "callbacks": None,
+                "errbacks": None,
+                "chain": None,
+                "chord": None
+            }}
+        ]
+        
+        # Base64 encode the body as expected by Celery
+        body_json = json.dumps(task_body)
+        encoded_body = base64.b64encode(body_json.encode('utf-8')).decode('utf-8')
+        
+        celery_task = {{
+            "body": encoded_body,
+            "content-encoding": "utf-8",
+            "content-type": "application/json",
+            "headers": {{
+                "lang": "py",
+                "task": "app.fetch_weather_data",
+                "id": task_id,
+                "shadow": None,
+                "eta": None,
+                "expires": None,
+                "group": None,
+                "group_index": None,
+                "retries": 0,
+                "timelimit": [None, None],
+                "root_id": task_id,
+                "parent_id": None,
+                "argsrepr": f"('{{city_name}}',)",
+                "kwargsrepr": "{{}}",
+                "origin": "test_script"
+            }},
+            "properties": {{
+                "correlation_id": task_id,
+                "reply_to": None,
+                "delivery_mode": 2,
+                "delivery_info": {{
+                    "exchange": "",
+                    "routing_key": "celery"
+                }},
+                "priority": 0,
+                "body_encoding": "base64",
+                "delivery_tag": None
+            }}
+        }}
+        
+        # Convert to JSON and add to queue
+        message = json.dumps(celery_task)
+        r.lpush('{self.queue_name}', message)
+    
+    print(f'Added {{num_tasks}} Celery tasks to queue')
 except Exception as e:
-    print('Failed:', e)
+    print('Failed:', str(e))
+    import traceback
+    traceback.print_exc()
 """
         result = self.execute_redis_command(command)
-        if result and f'Added {num_tasks} tasks' in result:
-            print(f"✅ Added {num_tasks} tasks to queue")
+        if result and f'Added {num_tasks} Celery tasks' in result:
+            print(f"✅ Added {num_tasks} properly formatted Celery tasks to queue")
             return True
         else:
             print(f"❌ Failed to add tasks: {result}")
@@ -278,8 +342,8 @@ def main():
                        help='Monitoring duration in minutes (default: 5)')
     parser.add_argument('--namespace', default='backend',
                        help='Kubernetes namespace (default: backend)')
-    parser.add_argument('--redis-host', default='10.109.162.45',
-                       help='Redis host (default: 10.109.162.45)')
+    parser.add_argument('--redis-host', default='redis-redis-chart.backend.svc.cluster.local',
+                       help='Redis host (default: redis-redis-chart.backend.svc.cluster.local)')
 
     args = parser.parse_args()
 
