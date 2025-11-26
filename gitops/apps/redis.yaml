@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argo-rollouts
+  name: redis
   namespace: argo
 spec:
   project: default
   source:
     repoURL: https://github.com/red512/vimex-gitops.git
     targetRevision: HEAD
-    path: gitops/environments/staging/argo-rollouts-helm-chart
+    path: gitops/redis-helm-chart
   destination:
     server: https://kubernetes.default.svc
-    namespace: argo-rollouts
+    namespace: backend  # Same namespace as your application
   syncPolicy:
     automated:
       prune: true

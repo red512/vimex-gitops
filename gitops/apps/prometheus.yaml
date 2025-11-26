@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: redis
+  name: prometheus
   namespace: argo
 spec:
   project: default
   source:
     repoURL: https://github.com/red512/vimex-gitops.git
     targetRevision: HEAD
-    path: gitops/environments/staging/redis-helm-chart
+    path: gitops/prometheus-helm-chart
   destination:
     server: https://kubernetes.default.svc
-    namespace: backend  # Same namespace as your application
+    namespace: monitoring
   syncPolicy:
     automated:
       prune: true
