@@ -1,0 +1,193 @@
+# Kyverno Security Policies
+# Uncomment these policies to enforce security standards
+
+---
+# Disallow privileged containers
+# apiVersion: kyverno.io/v1
+# kind: ClusterPolicy
+# metadata:
+#   name: disallow-privileged-containers
+# spec:
+#   validationFailureAction: enforce
+#   background: true
+#   rules:
+#     - name: disallow-privileged
+#       match:
+#         any:
+#           - resources:
+#               kinds:
+#                 - Pod
+#       validate:
+#         message: "Privileged containers are not allowed"
+#         pattern:
+#           spec:
+#             =(securityContext):
+#               =(privileged): "false"
+#             =(containers):
+#               - =(securityContext):
+#                   =(privileged): "false"
+
+---
+# Require resource limits and requests
+# apiVersion: kyverno.io/v1
+# kind: ClusterPolicy
+# metadata:
+#   name: require-pod-resources
+# spec:
+#   validationFailureAction: enforce
+#   background: true
+#   rules:
+#     - name: validate-resources
+#       match:
+#         any:
+#           - resources:
+#               kinds:
+#                 - Pod
+#       exclude:
+#         any:
+#           - resources:
+#               namespaces:
+#                 - kube-system
+#                 - kyverno
+#                 - argocd
+#       validate:
+#         message: "Resource requests and limits are required"
+#         pattern:
+#           spec:
+#             containers:
+#               - resources:
+#                   requests:
+#                     memory: "?*"
+#                     cpu: "?*"
+#                   limits:
+#                     memory: "?*"
+#                     cpu: "?*"
+
+---
+# Require specific labels for better organization
+# apiVersion: kyverno.io/v1
+# kind: ClusterPolicy
+# metadata:
+#   name: require-labels
+# spec:
+#   validationFailureAction: enforce
+#   background: true
+#   rules:
+#     - name: require-labels
+#       match:
+#         any:
+#           - resources:
+#               kinds:
+#                 - Pod
+#                 - Service
+#                 - Deployment
+#       exclude:
+#         any:
+#           - resources:
+#               namespaces:
+#                 - kube-system
+#                 - kyverno
+#                 - argocd
+#       validate:
+#         message: "Required labels are missing: app.kubernetes.io/name, app.kubernetes.io/version, environment"
+#         pattern:
+#           metadata:
+#             labels:
+#               "app.kubernetes.io/name": "?*"
+#               "app.kubernetes.io/version": "?*"
+#               "environment": "staging|production|development"
+
+---
+# Disallow root user in containers
+# apiVersion: kyverno.io/v1
+# kind: ClusterPolicy
+# metadata:
+#   name: disallow-root-user
+# spec:
+#   validationFailureAction: enforce
+#   background: true
+#   rules:
+#     - name: disallow-root-user
+#       match:
+#         any:
+#           - resources:
+#               kinds:
+#                 - Pod
+#       exclude:
+#         any:
+#           - resources:
+#               namespaces:
+#                 - kube-system
+#                 - kyverno
+#                 - argocd
+#       validate:
+#         message: "Running as root user (UID 0) is not allowed"
+#         pattern:
+#           spec:
+#             =(securityContext):
+#               =(runAsUser): ">0"
+#             =(containers):
+#               - =(securityContext):
+#                   =(runAsUser): ">0"
+
+---
+# Disallow containers with allowPrivilegeEscalation
+# apiVersion: kyverno.io/v1
+# kind: ClusterPolicy
+# metadata:
+#   name: disallow-privilege-escalation
+# spec:
+#   validationFailureAction: enforce
+#   background: true
+#   rules:
+#     - name: disallow-privilege-escalation
+#       match:
+#         any:
+#           - resources:
+#               kinds:
+#                 - Pod
+#       exclude:
+#         any:
+#           - resources:
+#               namespaces:
+#                 - kube-system
+#                 - kyverno
+#                 - argocd
+#       validate:
+#         message: "allowPrivilegeEscalation must be set to false"
+#         pattern:
+#           spec:
+#             containers:
+#               - securityContext:
+#                   allowPrivilegeEscalation: "false"
+
+---
+# Require non-root filesystem
+# apiVersion: kyverno.io/v1
+# kind: ClusterPolicy
+# metadata:
+#   name: require-non-root-filesystem
+# spec:
+#   validationFailureAction: enforce
+#   background: true
+#   rules:
+#     - name: require-non-root-fs
+#       match:
+#         any:
+#           - resources:
+#               kinds:
+#                 - Pod
+#       exclude:
+#         any:
+#           - resources:
+#               namespaces:
+#                 - kube-system
+#                 - kyverno
+#                 - argocd
+#       validate:
+#         message: "readOnlyRootFilesystem must be set to true"
+#         pattern:
+#           spec:
+#             containers:
+#               - securityContext:
+#                   readOnlyRootFilesystem: "true"

@@ -1,0 +1,82 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: worker
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: worker
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: {{ .Values.worker.replicaCount | default 1 }}
+  strategy:
+    canary:
+      steps:
+      - setWeight: 100
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: celery
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        workingDir: /app
+        command: ["celery"]
+        args:
+          - "-A"
+          - "app.celery"
+          - "worker"
+          - "--loglevel=info"
+          - "--concurrency=1"
+          - "--prefetch-multiplier=0"
+          - "--pool=solo"
+          - "--without-gossip"
+          - "--without-mingle"
+          - "--without-heartbeat"
+        env:
+          - name: API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: api-key
+                key: API-KEY
+          - name: CELERY_BROKER_URL
+            value: "redis://redis-redis-chart:6379/0"
+          - name: CELERY_RESULT_BACKEND
+            value: "redis://redis-redis-chart:6379/0"
+          - name: C_FORCE_ROOT
+            value: "true"
+        resources:
+          {{- toYaml .Values.worker.resources | nindent 10 }}
+        startupProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - celery -A app.celery inspect ping
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          failureThreshold: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - celery -A app.celery inspect ping
+          initialDelaySeconds: 15
+          periodSeconds: 30
+          timeoutSeconds: 10
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - celery -A app.celery inspect ping
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10

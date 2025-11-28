@@ -8,10 +8,10 @@ spec:
   source:
     repoURL: https://github.com/red512/vimex-gitops.git
     targetRevision: HEAD
-    path: gitops/redis-helm-chart
+    path: gitops/helm/redis-helm-chart
   destination:
     server: https://kubernetes.default.svc
-    namespace: backend  # Same namespace as your application
+    namespace: backend
   syncPolicy:
     automated:
       prune: true

@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: {{ .Values.namespace.name }}
+spec:
+  args:
+  - name: service-name
+    value: backend-service
+  metrics:
+  - name: success-rate
+    interval: 5m
+    successCondition: result[0] >= 0.95
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-server.monitoring.svc.cluster.local:80
+        query: |
+          sum(irate(
+            nginx_ingress_controller_requests{service="{{ .Values.service.name }}", status!~"5.*"}[5m]
+          )) /
+          sum(irate(
+            nginx_ingress_controller_requests{service="{{ .Values.service.name }}"}[5m]
+          ))
+  - name: avg-response-time
+    interval: 5m
+    successCondition: result[0] <= 0.5
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-server.monitoring.svc.cluster.local:80
+        query: |
+          histogram_quantile(0.95,
+            sum(rate(nginx_ingress_controller_request_duration_seconds_bucket{service="{{ .Values.service.name }}"}[5m])) by (le)
+          )

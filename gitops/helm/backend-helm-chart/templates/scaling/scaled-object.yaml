@@ -1,0 +1,30 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker-scaler
+  namespace: {{ .Values.namespace.name }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  scaleTargetRef:
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    name: worker
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  pollingInterval: 10  # Check every 10 seconds (was 15)
+  cooldownPeriod: 30   # Reduced from 60 to scale down faster for testing
+  fallback:
+    failureThreshold: 3
+    replicas: 1
+  triggers:
+    - type: redis
+      metadata:
+        address: "redis-redis-chart.{{ .Values.namespace.name }}.svc.cluster.local:6379"
+        listName: {{ .Values.autoscaling.redis.queueName | default "celery" | quote }}
+        listLength: {{ .Values.autoscaling.redis.targetQueueLength | default "5" | quote }}
+        activationListLength: "0"  # Activate immediately when queue has items
+        databaseIndex: "0"
+        enableTLS: "false"
+{{- end }}

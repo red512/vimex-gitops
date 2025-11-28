@@ -1,0 +1,63 @@
+# Kyverno Configuration Values
+# Uncomment this file to configure Kyverno deployment
+
+# kyverno:
+#   # Resource limits optimized for minikube
+#   resources:
+#     limits:
+#       memory: "256Mi"
+#       cpu: "100m"
+#     requests:
+#       memory: "128Mi"
+#       cpu: "50m"
+#
+#   # Background controller for policy violations
+#   backgroundController:
+#     resources:
+#       limits:
+#         memory: "128Mi"
+#         cpu: "100m"
+#       requests:
+#         memory: "64Mi"
+#         cpu: "50m"
+#
+#   # Cleanup controller
+#   cleanupController:
+#     resources:
+#       limits:
+#         memory: "128Mi"
+#         cpu: "100m"
+#       requests:
+#         memory: "64Mi"
+#         cpu: "50m"
+#
+#   # Reports controller
+#   reportsController:
+#     resources:
+#       limits:
+#         memory: "128Mi"
+#         cpu: "100m"
+#       requests:
+#         memory: "64Mi"
+#         cpu: "50m"
+#
+#   # Security settings
+#   securityContext:
+#     runAsNonRoot: true
+#     runAsUser: 10001
+#     allowPrivilegeEscalation: false
+#     capabilities:
+#       drop:
+#         - ALL
+#
+#   # Pod Security Standards
+#   podSecurityStandard: restricted
+#
+#   # Enable/disable features
+#   features:
+#     admissionReports:
+#       enabled: true
+#     backgroundScan:
+#       enabled: true
+#     policyReports:
+#       enabled: true
