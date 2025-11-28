@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: backend
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: backend
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    canary:
+      canaryService: backend-service-canary
+      stableService: backend-service
+      trafficRouting:
+        nginx:
+          stableIngress: backend-ingress
+      steps:
+      - setWeight: 20
+      - pause: {duration: 5s}
+      - setWeight: 50
+      - pause: {duration: 5s}
+      - setWeight: 80
+      - pause: {duration: 10s}
+      scaleDownDelaySeconds: 300  # 5 minutes delay before scaling down
+      scaleDownDelayRevisionLimit: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{ toYaml .Values.resources | nindent 12 }}
+          ports:
+            - containerPort: 5000
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-key
+                  key: API-KEY
+            - name: CELERY_BROKER_URL
+              value: "redis://redis-redis-chart:6379/0"
+            - name: CELERY_RESULT_BACKEND
+              value: "redis://redis-redis-chart:6379/0"
+
+

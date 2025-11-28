@@ -1,0 +1,40 @@
+redis:
+  image:
+    repository: redis
+    tag: "7.2-alpine"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 6379
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
+  config:
+    maxMemory: "100mb"
+    maxMemoryPolicy: "allkeys-lru"
+    appendOnly: true
+    appendFsync: "everysec"
+
+  replicaCount: 1
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  securityContext:
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
