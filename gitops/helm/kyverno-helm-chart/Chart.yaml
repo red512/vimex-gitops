@@ -1,0 +1,11 @@
+# Kyverno Helm Chart - Kubernetes Policy Engine
+# Uncomment this file to install Kyverno for runtime policy enforcement
+
+# apiVersion: v2
+# name: kyverno
+# version: 1.0.0
+# description: Kyverno policy engine for Kubernetes
+# dependencies:
+#   - name: kyverno
+#     version: "3.1.4"  # Check https://github.com/kyverno/kyverno/releases for latest
+#     repository: "https://kyverno.github.io/kyverno/"

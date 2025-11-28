@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/red512/vimex-gitops.git
     targetRevision: HEAD
-    path: gitops/argo-rollouts-helm-chart
+    path: gitops/helm/argo-rollouts-helm-chart
   destination:
     server: https://kubernetes.default.svc
     namespace: argo-rollouts
