@@ -11,7 +11,7 @@ spec:
     path: gitops/helm/redis-helm-chart
   destination:
     server: https://kubernetes.default.svc
-    namespace: backend  # Same namespace as your application
+    namespace: backend
   syncPolicy:
     automated:
       prune: true
