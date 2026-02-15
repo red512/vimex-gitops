@@ -1,0 +1,9 @@
+apiVersion: v2
+name: external-secrets
+description: ExternalSecrets Operator for syncing GitHub secrets into Kubernetes
+type: application
+version: 1.0.0
+appVersion: "0.9.9"
+maintainers:
+  - name: DevOps
+    email: devops@example.com

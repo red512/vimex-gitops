@@ -1,0 +1,31 @@
+# ExternalSecrets Operator Helm Chart Values
+
+# Install the ExternalSecrets Operator
+installOperator: true
+
+# Namespace to install the operator
+operatorNamespace: external-secrets
+
+# SecretStore Configuration
+secretStore:
+  enabled: true
+  name: github-secret-store
+  namespace: argo
+  # Provider: github (requires a GitHub Personal Access Token)
+  provider: github
+
+# ExternalSecret Configuration (syncs GitHub secret to Kubernetes)
+externalSecret:
+  enabled: true
+  name: github-token-secret
+  namespace: argo
+  # Reference to the SecretStore
+  secretStoreName: github-secret-store
+  # Which GitHub secret to fetch (you'll create this in GitHub UI)
+  githubSecretName: GITHUB_TOKEN
+  # What to name the resulting Kubernetes Secret
+  kubernetesSecretName: github-token
+  # Which key in the Secret to store the value
+  kubernetesSecretKey: token
+  # How often to refresh the secret
+  refreshInterval: 1h
